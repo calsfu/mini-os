@@ -1,0 +1,13 @@
+My code is wrapped in a while loop in order to ensure consecutive running. First, I recieve a prompt from the user using fgets. This is put in the string buffer. I then tokenize buffer with strtok in order to seperate the instances of |. Each string created is put into a string array called commands. I also check if there illegal commands, like > in a command other than the last one. Next, I check the beginning and end of the string array command to see if it contains > <. If it does, I need to once again tokenize that string. I remove the I/O redirector symbol and the name of file to direct it to. The name of the file is saved and an int is turned positive to symbolize an input or output redirect. The next step is to once again tokenize the string. This time, I seperate the commands and arguemnts by using strtok looking for a space. An important part of this step is removing leading and trailing spaces. Each argument is put into execArgs, which is an array of array of strings. This will later be passed into exec. 
+
+After this, it moves on to fork. The fork creats a child command that will eventually run execvp. If there is only one command, it runs execvp on that command. If there was a > or <, the stdinput or std_output are redirected to the corresponding file. This is done by opening/creating file, duping the file with the file descriptor, than closing it. If there is more than one command, that means it needs to pipe. Piping redirects the input the input and output. this is done using the pipe(fd) system call, then changing STD_OUTPUT to the 1st index of fd, then changing STD_INPUT file descriptor to the 0th index of fd. This is true for all commands except the first and last. The first keep its input as STD_INPUT, or a file if < was used, while the last returns to STD_OUTPUT instead of fd[1], unless > was used. The commands are executed using execvp which takes the name of the command as its first argument and an array of args as its second arguement. This array starts with the command and has an entry for each arguemnt, then ends with NULL. 
+
+For the parent, it runs waitpid, which will collect the status of the child if it returns. If the parent runs &, however, it will use the WHOHANG flag which will cause the parent to return to the program anyway, even if the child has not finished. 
+
+After this, the program will reprompt and loop. 
+
+Other info
+- If ctrl+d is inputted, myshell will quit
+- If error is detected, error will be printed and execvp will not run. 
+- Works with an input/output redirector on same command as long as there is only one command. 
+ 

@@ -1,0 +1,24 @@
+My file system works like the file system learned in class. The first 4096 4kb blocks are resereved for metadata, while the lat 4096 are reserved for data. 
+First, my program works when make_fs is called. This creates a filesystem using the make_disk() function. I also write the meta data to the disk here. The three pieces
+of important metadata re the superblock, FAT, and Directory. When mount_fs is called, these structs/arrays are ported to the local environment. That is done by saving the information in 
+specific blocks, each of which is stored in the superblock, which always is at 0. The FAT takes 4 blocks, since its a array of 4 bytes of  4096, while the other two only take 1 blcok. ONce the memory is copied, the file system is ready to run. Once umount is run, the meta data is copied back into the file system and the local variables are freed. 
+
+The following is a description of each function and how it works. Each function error checks and returns -1 if failed. 
+fs_open: Opens a file for use. Checks directory for instance of file with same name, checks for an open file descriptor with a loop, then adds it to filedescriptor array. Return -1 if  fails
+fs_close: Lowers reference count and frees spot in fds array.
+fs_crete: Creates a file. Checks if name length is too long or if name already exists in directory. Otherwise, adds it to the first spoti n the directory. 
+fs_delete: Checks if file with name exists and ref_cnt is 0. Loops through FAT and frees blocks for use until reaches EOF.
+fs_read: Checks if file id is valid, then loops the appropiate amount of blocks (based on nbyte) until it reaches either EOF or all bytes read. Data is read into a buffer using block_read, then is converted to the correct length (based on offset) with memcpy. This is then concatanted to a return string. 
+fs_write: Works similarly to fs_read. Writes to a buffer with memcpy of size 4096 - offset. ONce done, swithces to next block. If the current block is EOF, creates a new block and moves to that one. Data is then written to the block wit block_write.
+fs_get_filesize: returns size
+fs_listfiles: Loops through directory and finds all files. Puts those values into array and returns it by reference. 
+fs_lseek: Seets the offset. Error checks to see if offset is greater than size. 
+fs_truncate: Cuts off the size of the file. Finds the EOF by looping thrrough the fat, then moves backwards until the amount of blocks is correct for the new, truncated amoutn of bytes. 
+
+Step by Step: Code is written to buffer with x amount of bytes. fs_write first checks if has an active files or an offest. If it has an offset, it finds the block that the file pointer is using the fat. The fat index is linked to a block and the fat value is the index of the next block. If the block value is -1, it is at the end of file. ONce the correct block is foudn, the first 4096 - offset bytes are written to the block. This is continuened until either the amount of bytes to write is 0, or if there is no more space left in the disk. Data is copied from the buffer using memcpy, then is written using block_write. 
+In order to read the file, lseek must be used to reset the offset. Then, the file is read by looping through the fat until the end of file is reached. The data is read into a buffer using block_read, then is copied to the return string using memcpy.
+
+
+I had trouble with the extra credit test cases. I tried increasing the amount of data blocks and reducing the amount of metadata blocks, which i don't know if is allowed, and I was not able to get the test cases to pass. In my own personal testing, however, it did work. 
+
+It also took me awhile to figure out umount. This is because I tried to store the FAT array in one data block. FAT, however, is an int array of size 4096, meaning it needs 4096 * 4 bytes, which is 4 blocks. 
